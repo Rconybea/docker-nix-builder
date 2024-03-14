@@ -54,6 +54,10 @@
               let
                 stdenv = prev.stdenv;
 
+                python3 = prev.python311Full;
+                python3Packages = prev.python311Packages;
+                pybind11 = python3Packages.pybind11;
+
                 # nix dependency #1
                 default-busybox-sandbox-shell = final.busybox.override {
                   useMusl = true;
@@ -121,7 +125,10 @@
                     (old: { src = nix-nix-path; version = "2.22.0"; }));
 
                 docker-nix-image =
-                  (prev.callPackage ./pkgs/docker-nix-image.nix { dockerTools = prev.dockerTools; });
+                  (prev.callPackage ./pkgs/docker-nix-image.nix { dockerTools = prev.dockerTools;
+                                                                  python = python3;
+                                                                  pybind11 = pybind11;
+                                                                  nix-nix = nix-nix; });
 
               in
                 {

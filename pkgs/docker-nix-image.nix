@@ -1,6 +1,7 @@
 {
   # nixpkgs deps
   dockerTools,
+  git, pybind11, python, eigen, catch2, cmake, gnumake, gcc, binutils, bash, tree, which, coreutils,
 
   # local deps
   nix-nix
@@ -14,6 +15,24 @@ dockerTools.buildLayeredImage {
   # probably can use this:
   #fromImage = mumble nix docker image
 
-  contents = [ nix-nix ];
+  contents = [ nix-nix
+
+               git
+
+               pybind11
+               python
+
+               eigen
+               catch2
+
+               cmake
+               gnumake
+               gcc
+               binutils
+               bash
+               tree
+               which
+               coreutils
+             ];
 }
 
