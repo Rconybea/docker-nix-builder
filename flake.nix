@@ -15,21 +15,21 @@
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
-  inputs.libgit2-path = { url = "github:libgit2/libgit2"; flake = false; };
+  #inputs.libgit2-path = { url = "github:libgit2/libgit2"; flake = false; };
 
   # NOTE: version taken from ~/proj/nix/.version
-  inputs.nix-nix-path = { url = "github:Nixos/nix"; flake = false; };
+  #inputs.nix-nix-path = { url = "github:Nixos/nix"; flake = false; };
 
   outputs
   = { self,
       nixpkgs,
       flake-utils,
-      libgit2-path,
-      nix-nix-path,
+      #libgit2-path,
+      #nix-nix-path,
     } :
       let
-        inherit (nixpkgs) lib;
-        inherit (lib) fileset;
+        #inherit (nixpkgs) lib;
+        #inherit (lib) fileset;
 
         out
         = system :
@@ -40,8 +40,11 @@
 
           in
             {
-              packages.nix-nix = appliedOverlay.nix-nix;
-              packages.docker-nix-image = appliedOverlay.docker-nix-image;
+              #packages.nix-nix = appliedOverlay.nix-nix;
+              packages.docker-nix-builder = appliedOverlay.docker-nix-builder;
+
+              packages.default = appliedOverlay.default;
+
             };
 
       in
@@ -58,82 +61,16 @@
                 python3Packages = prev.python311Packages;
                 pybind11 = python3Packages.pybind11;
 
-                # nix dependency #1
-                default-busybox-sandbox-shell = final.busybox.override {
-                  useMusl = true;
-                  enableStatic = true;
-                  enableMinimal = true;
-                  extraConfig = ''
-                    CONFIG_FEATURE_FANCY_ECHO y
-                    CONFIG_FEATURE_SH_MATH y
-                    CONFIG_FEATURE_SH_MATH_64 y
-
-                    CONFIG_ASH y
-                    CONFIG_ASH_OPTIMIZE_FOR_SIZE y
-
-                    CONFIG_ASH_ALIAS y
-                    CONFIG_ASH_BASH_COMPAT y
-                    CONFIG_ASH_CMDCMD y
-                    CONFIG_ASH_ECHO y
-                    CONFIG_ASH_GETOPTS y
-                    CONFIG_ASH_INTERNAL_GLOB y
-                    CONFIG_ASH_JOB_CONTROL y
-                    CONFIG_ASH_PRINTF y
-                    CONFIG_ASH_TEST y
-                    '';
-                };
-
-                # nix dependency #2
-                # TODO: move this into ./pkgs/libgit2-nix.nix
-                libgit2-nix = prev.libgit2.overrideAttrs (attrs: {
-                  src = libgit2-path;
-                  version = libgit2-path.lastModifiedDate;
-                  cmakeFlags = attrs.cmakeFlags or [] ++ [ "-DUSE_SSH=exec" ];
-                });
-                
-                # nix dependency #3
-                # TODO: move this into ./pkgs/boehmgc-nix-.nix
-                boehmgc-nix =
-                  (final.boehmgc.override { enableLargeConfig = true; }).overrideAttrs
-                    (old: { patches = (old.patches or [])
-                                      ++ [
-                                        ./nix-patches/boehmgc-coroutine-sp-fallback.diff
-                                        ./nix-patches/boehmgc-traceable_allocator-public.diff
-                                      ];
-                          });
-
-                # adapted from nix repo toplevel flake.nix.
-                # (focusing on call callPacakge on package.nix)
-                nix-nix = 
-                  (let
-                    officialRelease = false;
-                    versionSuffix = "xospecial";
-                    
-                  in (prev.callPackage ./pkgs/nix.nix  # was ./package.nix in ~/proj/nix
-                    {
-                      officialRelease = officialRelease;
-                      fileset = fileset;  # note fileset is short-circuited by replacement src=nix-nix-path below #
-                      stdenv = stdenv;
-                      versionSuffix = versionSuffix;
-
-                      boehmgc = boehmgc-nix;
-                      libgit2 = libgit2-nix;
-                      busybox-sandbox-shell = final.busybox-sandbox-shell or final.default-busybox-sandbox-shell;
-                    } // {
-                      #perl-bindings = final.nix-perl-bindings;
-                    }).overrideAttrs
-                    (old: { src = nix-nix-path; version = "2.22.0"; }));
-
-                docker-nix-image =
-                  (prev.callPackage ./pkgs/docker-nix-image.nix { dockerTools = prev.dockerTools;
+                docker-nix-builder =
+                  (prev.callPackage ./pkgs/docker-nix-builder.nix { #dockerTools = prev.dockerTools;
                                                                   python = python3;
-                                                                  pybind11 = pybind11;
-                                                                  nix-nix = nix-nix; });
+                                                                  pybind11 = pybind11; });
 
               in
                 {
-                  nix-nix = nix-nix;
-                  docker-nix-image = docker-nix-image;
+                  default = docker-nix-builder;
+
+                  docker-nix-builder = docker-nix-builder;
                 });
         };
 }
