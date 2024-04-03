@@ -61,12 +61,14 @@
                 python3Packages = prev.python311Packages;
                 pybind11 = python3Packages.pybind11;
                 sphinx = python3Packages.sphinx;
+                sphinx-rtd-theme = python3Packages.sphinx-rtd-theme;
                 breathe = python3Packages.breathe;
 
                 docker-nix-builder =
                   (prev.callPackage ./pkgs/docker-nix-builder.nix { python = python3;
                                                                     pybind11 = pybind11;
                                                                     sphinx = sphinx;
+                                                                    sphinx-rtd-theme = sphinx-rtd-theme;
                                                                     breathe = breathe;
                                                                   });
 

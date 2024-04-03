@@ -37,7 +37,7 @@
   dockerTools,
   nix, git, openssh, curl, wget, cacert,
 
-  doxygen, sphinx, breathe,
+  doxygen, sphinx, sphinx-rtd-theme, breathe,
 
   pybind11, python, eigen, jsoncpp,
   catch2, cmake,
@@ -181,6 +181,7 @@ dockerTools.buildLayeredImage {
 
                doxygen
                sphinx
+               sphinx-rtd-theme
                breathe
 
                pybind11
