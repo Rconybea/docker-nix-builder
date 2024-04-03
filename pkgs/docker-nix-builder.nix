@@ -1,7 +1,51 @@
+# Defines a function of listed derivation inputs, that constructs a docker image.
+#
+# This function is designed to be invoked from callPackage,
+# (see ../flake.nix).  When invoking callPackage,  can substitute for particular inputs,
+# which is how we control python versione etc.
+#
+# Docker image includes:
+# - nix               (grants ability to fetch arbitrary deps on-demand)
+# - gcc build stack
+# - python
+# - xo library deps   (pybind11, jsoncpp, eigen, catch2)
+#
+# 1. Deps baked into the docker image improve performance by reducing traffic to nix binary cache,
+# but increase size of the docker image.
+# Docker image has to be copied from ghcr.io/rconybea/docker-nix-builder:v1 each time
+# github CI workflow runs
+#
+# 2. Deps not backed into docker image will still work from github CI,  but will be fetched
+# anew each time github workflow runs that relies on the docker image built here.
+#
+# Github CI can exercise all the xo library nix builds using this docker container:
+# - xo-nix2/.github/workflows/main2.yml   github CI workflow
+#   xo-nix2 at https://github.com/rconybea/xo-nix2
+# - xo-nix2/pkgs/xo-foo.nix  package definitions (like this one) for each xo library.
+#
+# To add a new dep to docker image:
+# 1. add dep name under # nixpkgs deps below
+# 2.
+#   2a. if dep appears at toplevel under nixpkgs (nix-env -qaP --> nixpkgs.foo for dep=foo)
+#       skip to step 3.
+#   2b. otherwise dep is not toplevel (nix-env -qaP --> nixpkgs.python311Packages.foo for example),
+#       then must add dep to callPackage invocation in ../flake.nix
+#       Can follow model used for pybind11
+# 3. add dep name to contents attribute in invocation of dockerTools.buildLayeredImage
 {
   # nixpkgs deps
   dockerTools,
-  nix, git, pybind11, python, eigen, catch2, cmake, gnumake, gcc, shadow, binutils, bashInteractive, bash, tree, which, coreutils, lib,
+  nix, git, openssh, curl, wget, cacert,
+
+  doxygen, sphinx, breathe,
+
+  pybind11, python, eigen, jsoncpp,
+  catch2, cmake,
+
+  gnumake, gcc, shadow,
+  gnutar, gzip,
+  gnugrep, findutils,
+  binutils, bashInteractive, bash, tree, which, coreutils, lib,
 } :
 
 let
@@ -130,12 +174,27 @@ dockerTools.buildLayeredImage {
   contents = [ nix
 
                git
+               openssh
+               curl
+               wget
+               cacert.out
+
+               doxygen
+               sphinx
+               breathe
 
                pybind11
                python
 
+               jsoncpp
                eigen
                catch2
+
+               gnutar
+               gzip
+
+               gnugrep
+               findutils
 
                cmake
                gnumake
@@ -170,5 +229,15 @@ dockerTools.buildLayeredImage {
     chmod 1777 /tmp
     chmod 1777 /var/tmp
   '';
+
+  config = {
+    # note: nix provider docker.nix that prepares do-anything-nixy docker image.
+    #       That version takes measures to allow nix cmds to override settings here:
+    #       1. uses .nix-profile/bin/bash for shell
+    #       2. puts certs under /nix/var/nix/profiles/default/etc/...
+    #
+    Cmd = [ "/bin/bash" ];
+    Env = [ "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt" ];
+  };
 }
 

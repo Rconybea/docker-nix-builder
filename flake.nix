@@ -60,11 +60,15 @@
                 python3 = prev.python311Full;
                 python3Packages = prev.python311Packages;
                 pybind11 = python3Packages.pybind11;
+                sphinx = python3Packages.sphinx;
+                breathe = python3Packages.breathe;
 
                 docker-nix-builder =
-                  (prev.callPackage ./pkgs/docker-nix-builder.nix { #dockerTools = prev.dockerTools;
-                                                                  python = python3;
-                                                                  pybind11 = pybind11; });
+                  (prev.callPackage ./pkgs/docker-nix-builder.nix { python = python3;
+                                                                    pybind11 = pybind11;
+                                                                    sphinx = sphinx;
+                                                                    breathe = breathe;
+                                                                  });
 
               in
                 {
