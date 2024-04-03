@@ -1,0 +1,3 @@
+# created by
+#   nix build .#docker-nix-builder
+result
