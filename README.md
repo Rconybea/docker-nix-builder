@@ -17,7 +17,7 @@ $ nix flake check
 1. compile if necessary
 ```
 $ cd ~/proj/docker-nix-builder  # directory containing this file
-$ nix build .#docker-nix-image
+$ nix build -L --print-build-logs .#docker-nix-builder
 ```
 
 2. upload to docker
